@@ -28,13 +28,15 @@ class Player(arcade.Sprite):
         self.fire_rate_multiplier = 1.0
         self.xp = 0
         self.aim_angle = 0
+        self.invulnerable_timer = 0  # Таймер неуязвимости
+        self.invulnerable_duration = 60  # 1 секунда неуязвимости (60 кадров)
     
     def update(self):
         """Обновление состояния игрока."""
         # Применяем изменение координат
         self.center_x += self.change_x
         self.center_y += self.change_y
-        
+
         # Ограничение движения пределами игрового поля
         if self.left < 0:
             self.left = 0
@@ -48,6 +50,14 @@ class Player(arcade.Sprite):
         # Перезарядка оружия
         if self.fire_cooldown > 0:
             self.fire_cooldown -= 1
+
+        # Таймер неуязвимости
+        if self.invulnerable_timer > 0:
+            self.invulnerable_timer -= 1
+
+    def is_invulnerable(self) -> bool:
+        """Проверка, находится ли игрок в состоянии неуязвимости."""
+        return self.invulnerable_timer > 0
     
     def move(self, key_left: bool, key_right: bool, key_up: bool, key_down: bool):
         """
@@ -107,10 +117,15 @@ class Player(arcade.Sprite):
     def take_damage(self, damage: int):
         """
         Получение урона.
-        
+
         :param damage: Количество урона
         """
+        if self.invulnerable_timer > 0:
+            return  # Игрок неуязвим
+        
         self.current_hp -= damage
+        self.invulnerable_timer = self.invulnerable_duration  # Даём неуязвимость
+        
         if self.current_hp < 0:
             self.current_hp = 0
     
@@ -154,7 +169,16 @@ class Player(arcade.Sprite):
     def is_alive(self) -> bool:
         """Проверка, жив ли игрок."""
         return self.current_hp > 0
-    
+
+    def draw(self):
+        """Отрисовка игрока с эффектом мигания при неуязвимости."""
+        if self.invulnerable_timer > 0:
+            # Мигание: видимы только каждый 2-й кадр
+            if self.invulnerable_timer // 5 % 2 == 0:
+                super().draw()
+        else:
+            super().draw()
+
     def draw_health_bar(self):
         """Отрисовка полоски здоровья."""
         # Фон полоски здоровья

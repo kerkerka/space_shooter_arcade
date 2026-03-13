@@ -36,19 +36,25 @@ class SpaceShooterArcade(arcade.Window):
     def setup_menu(self):
         """Настройка главного меню."""
         from states.menu import MenuState
+        # Сбрасываем все чекпоинты при выходе в главное меню
+        database.clear_checkpoints()
         self.menu_state = MenuState()
         self.current_state = 'menu'
 
     def setup_game(self, level: int, start_wave: int = 1):
         """Настройка игры"""
         from states.game import GameState
-        
-        # Проверяем чек-поинт для 3го уровня
-        if level == 3:
+
+        # Проверяем чек-поинт для 2 и 3 уровней
+        if level == 2:
+            checkpoint_wave = database.get_checkpoint(2)
+            if checkpoint_wave == 10:
+                start_wave = 10
+        elif level == 3:
             checkpoint_wave = database.get_checkpoint(3)
             if checkpoint_wave == 10:
                 start_wave = 10
-        
+
         self.game_state = GameState(level, start_wave=start_wave)
         self.game_state.setup()
         self.current_state = 'game'

@@ -136,7 +136,7 @@ class GameOverState:
         # Воспроизводим звук клика
         if self.click_sound:
             try:
-                arcade.play_sound(self.click_sound, volume=0.5)
+                arcade.play_sound(self.click_sound, volume=settings.SOUND_VOLUME)
             except:
                 pass
         

@@ -52,8 +52,6 @@ class MenuState:
         """Инициализация меню"""
         self.buttons = []
         self.selected_level = 1
-        self.sound_volume = settings.SOUND_VOLUME_DEFAULT
-        self.music_volume = settings.MUSIC_VOLUME_DEFAULT
         self.best_records = {}
         self.click_sound = arcade.load_sound(settings.SOUNDS_DIR + "/" + settings.SOUND_BUTTON_CLICK)
         self._create_buttons()
@@ -91,15 +89,15 @@ class MenuState:
             settings.SCREEN_WIDTH // 2 - 150,
             150,
             200, button_height,
-            f"Звук: {int(self.sound_volume * 100)}%"
+            f"Звук: {int(settings.SOUND_VOLUME * 100)}%"
         )
         self.buttons.append(('sound', None, self.sound_btn))
-        
+
         self.music_btn = Button(
             settings.SCREEN_WIDTH // 2 + 150,
             150,
             200, button_height,
-            f"Музыка: {int(self.music_volume * 100)}%"
+            f"Музыка: {int(settings.MUSIC_VOLUME * 100)}%"
         )
         self.buttons.append(('music', None, self.music_btn))
     
@@ -127,10 +125,10 @@ class MenuState:
         :param mouse_y: Позиция курсора по Y
         :return: Кортеж (действие, значение) или None
         """
-        # Воспроизводим звук клика (звук загружен заранее, задержки нет)
+        # Воспроизводим звук клика
         if self.click_sound:
             try:
-                arcade.play_sound(self.click_sound, volume=0.5)
+                arcade.play_sound(self.click_sound, volume=settings.SOUND_VOLUME)
             except:
                 pass
         
@@ -139,17 +137,17 @@ class MenuState:
                 if btn_type == 'level':
                     return ('start_level', btn_value)
                 elif btn_type == 'sound':
-                    self.sound_volume = (self.sound_volume + 0.25) % 1.25
-                    if self.sound_volume > 1:
-                        self.sound_volume = 0
-                    btn.text = f"Звук: {int(self.sound_volume * 100)}%"
-                    return ('sound_change', self.sound_volume)
+                    settings.SOUND_VOLUME = (settings.SOUND_VOLUME + settings.SOUND_VOLUME_STEP) % 1.25
+                    if settings.SOUND_VOLUME > 1:
+                        settings.SOUND_VOLUME = 0
+                    btn.text = f"Звук: {int(settings.SOUND_VOLUME * 100)}%"
+                    return ('sound_change', settings.SOUND_VOLUME)
                 elif btn_type == 'music':
-                    self.music_volume = (self.music_volume + 0.25) % 1.25
-                    if self.music_volume > 1:
-                        self.music_volume = 0
-                    btn.text = f"Музыка: {int(self.music_volume * 100)}%"
-                    return ('music_change', self.music_volume)
+                    settings.MUSIC_VOLUME = (settings.MUSIC_VOLUME + settings.SOUND_VOLUME_STEP) % 1.25
+                    if settings.MUSIC_VOLUME > 1:
+                        settings.MUSIC_VOLUME = 0
+                    btn.text = f"Музыка: {int(settings.MUSIC_VOLUME * 100)}%"
+                    return ('music_change', settings.MUSIC_VOLUME)
         
         return None
     

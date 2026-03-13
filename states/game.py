@@ -138,7 +138,7 @@ class GameState:
         """Воспроизведение звука."""
         if sound_name in self.sounds:
             try:
-                arcade.play_sound(self.sounds[sound_name], volume=0.5)
+                arcade.play_sound(self.sounds[sound_name], volume=settings.SOUND_VOLUME)
             except Exception as e:
                 pass  # Игнорируем ошибки XAudio2
 
@@ -307,18 +307,49 @@ class GameState:
                 break
 
         # Враги сталкиваются с игроком
+        wave_info = self.level_manager.get_wave_info()
+        is_boss_wave = wave_info['is_boss_wave']
+        
         for enemy in self.enemy_list:
             if arcade.check_for_collision(enemy, self.player):
-                self.player.take_damage(enemy.damage)
-                self._play_sound('player_hit')
-
-                # Определяем тип врага для частиц
+                # Неуязвимость работает ТОЛЬКО в волнах с боссами
+                if is_boss_wave and not self.player.is_invulnerable():
+                    self.player.take_damage(enemy.damage)
+                    
+                    # Звук и частицы
+                    self._play_sound('player_hit')
+                    self.particle_system.emit_hit_particles(
+                        enemy.center_x, enemy.center_y
+                    )
+                elif is_boss_wave and self.player.is_invulnerable():
+                    # Игрок неуязвим - просто отталкиваем врага
+                    self._push_back_enemy(enemy)
+                elif not is_boss_wave:
+                    # Обычная волна - игрок получает урон без неуязвимости
+                    self.player.take_damage(enemy.damage)
+                    self._play_sound('player_hit')
+                    self.particle_system.emit_hit_particles(
+                        enemy.center_x, enemy.center_y
+                    )
+                
+                # Боссы НЕ умирают при столкновении
                 is_boss = hasattr(enemy, 'boss_level')
-                self.particle_system.emit_death_particles(
-                    enemy.center_x, enemy.center_y,
-                    enemy_type='boss' if is_boss else 'normal'
-                )
-                enemy.kill()
+                if not is_boss:
+                    enemy.kill()
+
+    def _push_back_enemy(self, enemy):
+        """Отталкивание врага от игрока при столкновении."""
+        import math
+        # Вычисляем направление от игрока к врагу
+        dx = enemy.center_x - self.player.center_x
+        dy = enemy.center_y - self.player.center_y
+        distance = math.sqrt(dx * dx + dy * dy)
+        
+        if distance > 0:
+            # Отталкиваем на 100 пикселей
+            push_distance = 100
+            enemy.center_x += (dx / distance) * push_distance
+            enemy.center_y += (dy / distance) * push_distance
 
     def _check_boss_support(self):
         """Проверка призыва подкрепления боссом."""
@@ -332,25 +363,33 @@ class GameState:
         """
         Спавн подкрепления боссом.
 
-        :param support_type: Тип подкрепления ('75', '50', '25')
+        :param support_type: Тип подкрепления ('80', '60', '40', '20')
         """
-        if support_type == '75':
-            count_weak = settings.BOSS_SUPPORT_75_WEAK
-            count_medium = settings.BOSS_SUPPORT_75_MEDIUM
-        elif support_type == '50':
-            count_weak = settings.BOSS_SUPPORT_50_WEAK
-            count_medium = settings.BOSS_SUPPORT_50_MEDIUM
-            count_tank = settings.BOSS_SUPPORT_50_TANK
-            for _ in range(count_tank):
-                self._spawn_support_enemy('tank')
-        else:  # '25'
-            count_medium = settings.BOSS_SUPPORT_25_MEDIUM
-            count_tank = settings.BOSS_SUPPORT_25_TANK
-            for _ in range(count_tank):
-                self._spawn_support_enemy('tank')
+        if support_type == '80':
+            count_weak = settings.BOSS_SUPPORT_80_WEAK
+            count_medium = settings.BOSS_SUPPORT_80_MEDIUM
+        elif support_type == '60':
+            count_weak = settings.BOSS_SUPPORT_60_WEAK
+            count_medium = settings.BOSS_SUPPORT_60_MEDIUM
+            count_tank = settings.BOSS_SUPPORT_60_TANK
+        elif support_type == '40':
+            count_weak = settings.BOSS_SUPPORT_40_WEAK
+            count_medium = settings.BOSS_SUPPORT_40_MEDIUM
+            count_tank = settings.BOSS_SUPPORT_40_TANK
+        else:  # '20'
+            count_weak = settings.BOSS_SUPPORT_20_WEAK
+            count_medium = settings.BOSS_SUPPORT_20_MEDIUM
+            count_tank = settings.BOSS_SUPPORT_20_TANK
 
-        for _ in range(count_weak if support_type != '50' and support_type != '25' else 0):
+        # Спавн танков
+        for _ in range(count_tank):
+            self._spawn_support_enemy('tank')
+
+        # Спавн слабых врагов
+        for _ in range(count_weak):
             self._spawn_support_enemy('weak')
+
+        # Спавн средних врагов
         for _ in range(count_medium):
             self._spawn_support_enemy('medium')
 
@@ -406,17 +445,26 @@ class GameState:
 
             # Лечение игрока
             heal = self.level_manager.get_heal_amount()
-            
+
             # Между 9й и 10й волной лечим полностью и сохраняем чек-поинт
             if self.level_manager.current_wave == 9:
                 self.player.heal_to_full()
-                if self.level == 3:
+                if self.level == 2:
+                    database.save_checkpoint(2, 10)
+                elif self.level == 3:
                     database.save_checkpoint(3, 10)
             else:
                 self.player.heal(heal)
 
-            # Прокачка оружия (кроме волны 10)
-            if self.level_manager.current_wave != 10:
+            # Прокачка оружия
+            if self.level == 4:
+                # На 4 уровне: до 9 волны включительно - обычная прокачка
+                if self.level_manager.current_wave <= 9:
+                    self.player.apply_weapon_upgrade(self.level_manager.current_wave)
+                # После 9 волны - каждые 3 волны +1.33x к скорострельности (12, 15, 18...)
+                elif (self.level_manager.current_wave - 9) % 3 == 0:
+                    self.player.fire_rate_multiplier *= 1.33
+            elif self.level_manager.current_wave != 10:
                 self.player.apply_weapon_upgrade(self.level_manager.current_wave)
 
     def _complete_level(self):
@@ -528,7 +576,7 @@ class GameState:
         # Воспроизводим звук клика
         if self.click_sound:
             try:
-                arcade.play_sound(self.click_sound, volume=0.5)
+                arcade.play_sound(self.click_sound, volume=settings.SOUND_VOLUME)
             except:
                 pass
         

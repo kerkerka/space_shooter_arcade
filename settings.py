@@ -31,7 +31,7 @@ GAME_WIDTH = 1920
 GAME_HEIGHT = 1080
 
 # === Камера ===
-CAMERA_RADIUS = 500  # Радиус круглой зоны видимости
+CAMERA_RADIUS = 400  # Радиус круглой зоны видимости
 
 # === Игрок ===
 PLAYER_SPEED = 5.5
@@ -116,18 +116,24 @@ FIRE_RATE_MULTIPLIER_2 = 1.5
 FIRE_RATE_MULTIPLIER_3 = 1.33  # Для итогового множителя x3.0
 
 # === Подкрепление от босса ===
-# 75% HP
-BOSS_SUPPORT_75_WEAK = 5
-BOSS_SUPPORT_75_MEDIUM = 2
+# 80% HP
+BOSS_SUPPORT_80_WEAK = 4
+BOSS_SUPPORT_80_MEDIUM = 2
 
-# 50% HP
-BOSS_SUPPORT_50_MEDIUM = 8
-BOSS_SUPPORT_50_WEAK = 3
-BOSS_SUPPORT_50_TANK = 2
+# 60% HP
+BOSS_SUPPORT_60_MEDIUM = 6
+BOSS_SUPPORT_60_WEAK = 3
+BOSS_SUPPORT_60_TANK = 1
 
-# 25% HP
-BOSS_SUPPORT_25_MEDIUM = 12
-BOSS_SUPPORT_25_TANK = 8
+# 40% HP
+BOSS_SUPPORT_40_MEDIUM = 8
+BOSS_SUPPORT_40_WEAK = 4
+BOSS_SUPPORT_40_TANK = 3
+
+# 20% HP
+BOSS_SUPPORT_20_MEDIUM = 10
+BOSS_SUPPORT_20_TANK = 6
+BOSS_SUPPORT_20_WEAK = 5
 
 # === Система частиц ===
 PARTICLE_BULLET_COUNT = 3      # частиц при выстреле
@@ -151,8 +157,11 @@ COLOR_DARK_GRAY = (64, 64, 64)
 COLOR_LIGHT_GRAY = (192, 192, 192)
 
 # === Звуки ===
+SOUND_VOLUME = 0.5  # Громкость звуковых эффектов (0.0 - 1.0)
+MUSIC_VOLUME = 0.3  # Громкость музыки (0.0 - 1.0)
 SOUND_VOLUME_DEFAULT = 0.5
 MUSIC_VOLUME_DEFAULT = 0.3
+SOUND_VOLUME_STEP = 0.25  # Шаг изменения громкости
 SOUND_SHOOT = "shoot.wav"
 SOUND_ENEMY_DEATH = "enemy_death.wav"
 SOUND_PLAYER_HIT = "player_hit.wav"

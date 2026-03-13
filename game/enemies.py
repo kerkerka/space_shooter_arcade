@@ -118,13 +118,13 @@ class MiniBoss(Enemy):
             settings.MINI_BOSS_1_XP
         )
         self.boss_level = level
-        
+
         # Для рывков (уровень 2)
         self.dash_cooldown = 0
         self.dash_duration = 0
         self.is_dashing = False
-        self.dash_speed = self.speed * 3
-        
+        self.dash_speed = self.speed * 2  # Уменьшено с *3 до *2
+
         # Таймер для рывков
         if level == 2:
             self.dash_cooldown = settings.MINI_BOSS_2_DASH_COOLDOWN
@@ -193,10 +193,11 @@ class FinalBoss(Enemy):
         self.is_dashing = False
         self.dash_speed = self.speed * 2.5
         
-        # Для призыва подкрепления
-        self.support_75_called = False
-        self.support_50_called = False
-        self.support_25_called = False
+        # Для призыва подкрепления (4 раза: 80%, 60%, 40%, 20%)
+        self.support_80_called = False
+        self.support_60_called = False
+        self.support_40_called = False
+        self.support_20_called = False
         
         # Таймеры
         self.dash_cooldown = settings.FINAL_BOSS_DASH_COOLDOWN
@@ -236,19 +237,22 @@ class FinalBoss(Enemy):
     def check_support_spawn(self) -> str:
         """
         Проверка необходимости призыва подкрепления.
-        
-        :return: Тип подкрепления ('75', '50', '25' или '')
+
+        :return: Тип подкрепления ('80', '60', '40', '20' или '')
         """
         hp_percent = self.hp / self.max_hp
-        
-        if hp_percent <= 0.75 and not self.support_75_called:
-            self.support_75_called = True
-            return '75'
-        elif hp_percent <= 0.50 and not self.support_50_called:
-            self.support_50_called = True
-            return '50'
-        elif hp_percent <= 0.25 and not self.support_25_called:
-            self.support_25_called = True
-            return '25'
-        
+
+        if hp_percent <= 0.80 and not self.support_80_called:
+            self.support_80_called = True
+            return '80'
+        elif hp_percent <= 0.60 and not self.support_60_called:
+            self.support_60_called = True
+            return '60'
+        elif hp_percent <= 0.40 and not self.support_40_called:
+            self.support_40_called = True
+            return '40'
+        elif hp_percent <= 0.20 and not self.support_20_called:
+            self.support_20_called = True
+            return '20'
+
         return ''
