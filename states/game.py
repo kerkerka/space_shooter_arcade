@@ -307,13 +307,13 @@ class GameState:
                 break
 
         # Враги сталкиваются с игроком
-        wave_info = self.level_manager.get_wave_info()
-        is_boss_wave = wave_info['is_boss_wave']
-        
         for enemy in self.enemy_list:
             if arcade.check_for_collision(enemy, self.player):
-                # Неуязвимость работает ТОЛЬКО в волнах с боссами
-                if is_boss_wave and not self.player.is_invulnerable():
+                # Проверяем, босс ли это
+                is_boss = hasattr(enemy, 'boss_level')
+                
+                if is_boss and not self.player.is_invulnerable():
+                    # Столкновение с боссом — игрок получает урон и неуязвимость
                     self.player.take_damage(enemy.damage)
                     
                     # Звук и частицы
@@ -321,20 +321,21 @@ class GameState:
                     self.particle_system.emit_hit_particles(
                         enemy.center_x, enemy.center_y
                     )
-                elif is_boss_wave and self.player.is_invulnerable():
-                    # Игрок неуязвим - просто отталкиваем врага
+                    
+                    # Отталкиваем босса
                     self._push_back_enemy(enemy)
-                elif not is_boss_wave:
-                    # Обычная волна - игрок получает урон без неуязвимости
+                    
+                elif is_boss and self.player.is_invulnerable():
+                    # Игрок ещё неуязвим после удара босса — просто отталкиваем
+                    self._push_back_enemy(enemy)
+                    
+                elif not is_boss:
+                    # Обычный враг — урон без неуязвимости
                     self.player.take_damage(enemy.damage)
                     self._play_sound('player_hit')
                     self.particle_system.emit_hit_particles(
                         enemy.center_x, enemy.center_y
                     )
-                
-                # Боссы НЕ умирают при столкновении
-                is_boss = hasattr(enemy, 'boss_level')
-                if not is_boss:
                     enemy.kill()
 
     def _push_back_enemy(self, enemy):
@@ -368,6 +369,7 @@ class GameState:
         if support_type == '80':
             count_weak = settings.BOSS_SUPPORT_80_WEAK
             count_medium = settings.BOSS_SUPPORT_80_MEDIUM
+            count_tank = 0
         elif support_type == '60':
             count_weak = settings.BOSS_SUPPORT_60_WEAK
             count_medium = settings.BOSS_SUPPORT_60_MEDIUM
