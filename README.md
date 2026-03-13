@@ -40,7 +40,7 @@
 ### Шаг 2: Скачайте игру
 
 ```bash
-git clone https://github.com/ВАШ_НИК/space_shooter_arcade.git
+git clone https://github.com/kerkerka/space_shooter_arcade
 cd space_shooter_arcade
 ```
 
@@ -210,7 +210,7 @@ space_shooter_arcade/
 
 Установите Arcade:
 ```bash
-pip install arcade
+pip install arcade==2.6.17
 ```
 
 
